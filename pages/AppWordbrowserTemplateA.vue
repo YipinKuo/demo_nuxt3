@@ -1,3 +1,3 @@
 <template>
-<AppWordbrowserTemplateA />
+<AppWordbrowserTemplate1 />
 </template>
