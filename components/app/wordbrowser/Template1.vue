@@ -46,6 +46,17 @@ export default {
       ddm_index
     }
   },
+  async setup() {
+    const [{ data }] = await Promise.all([
+      useFetch(`/api/data_wordbrowser`),
+    ]);
+    const words = JSON.parse(data.value);
+    console.log(words);
+
+    return {
+      words
+    }
+  },
   methods: {
     ddm_onclick: function() {
       this.ddm_sub_show = !this.ddm_sub_show;
@@ -54,13 +65,6 @@ export default {
       this.ddm_index = i;
       this.ddm_sub_show = false;
     }
-  },
-  async asyncData(context) {
-    const mb = await context.$axios.$get(
-      'https://jsonplaceholder.typicode.com/todos'
-    );
-    console.log(mb);
-    return { mb };
   }
 }
 </script>>

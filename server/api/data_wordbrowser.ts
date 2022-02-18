@@ -35,7 +35,7 @@ export default async (req: IncomingMessage, res: ServerResponse) => {
   const words = database.collection(" e4f_word");
   
   
-  const w = await words.find(query, options).project({_id: 1,  "word_length": { $strLenCP: "$word" }, word: 1, prss:1 , subs: 1, dictionary: 1 }).limit(10).sort({word_length: 1, word: 1}).toArray();
+  const w = await words.find(query, options).project({_id: 1,  "word_length": { $strLenCP: "$word" }, "word_sort": { $toLower: "$word" }, word: 1, prss:1 , subs: 1, dictionary: 1 }).limit(10).sort({word_sort: 1}).toArray();
   
   res.statusCode = 200;
   res.end(JSON.stringify(w));
