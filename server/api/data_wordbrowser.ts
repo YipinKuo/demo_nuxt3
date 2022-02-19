@@ -23,23 +23,40 @@ export default async (req: IncomingMessage, res: ServerResponse) => {
 	// Append header;
   appendHeader(res, 'content-type', 'text/json;charset=UTF-8');
    
-  const body = useBody(req);
-  const query = (body.query)?body.query:{};
-  const options = (body.options)?body.options:{};
+  const body = await useBody(req);
+  const query = (body.query) ? { word: new RegExp('^' + body.query) } : { word: new RegExp('^a') };
+  var page = (!isNaN(parseInt(body.page)))? body.page : 1;
   
   const uri = "mongodb+srv://kevin:qazWSXedcRFV@cluster0.cvv6u.mongodb.net?retryWrites=true&writeConcern=majority";
   //const uri = 'mongodb://adm518:1qazWSX3edcRFV@soicsrv03.soic.org.tw:6603/?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&directConnection=true&ssl=false';
   const client = new MongoClient(uri, { enableUtf8Validation: false });
   await client.connect();
   const database = client.db("Demo");
-  const words = database.collection(" e4f_word");
+  const collect = database.collection(" e4f_word");
   
   
-  const w = await words.find(query, options).project({_id: 1,  "word_length": { $strLenCP: "$word" }, "word_sort": { $toLower: "$word" }, word: 1, prss:1 , subs: 1, dictionary: 1 }).limit(10).sort({word_sort: 1}).toArray();
+  const words = await collect
+          .find(query)
+          .project({ "_length": { $strLenCP: "$word" }, "_sort": { $toLower: "$word" }, _id: 1,  word: 1, prss:1 , subs: 1, dictionary: 1 })
+          //.sort({ word_length: 1, word_sort: 1})
+          //.limit(10)
+          .toArray();
+          
+  words.sort((a, b) => (a._length > b._length) ? 1 : -1);
   
+  const MaxPage = parseInt(Math.floor(words.length / 10)) + 1;
+  page = page > MaxPage ? MaxPage : page;
+  var result = [];
+  for(var i = 0; i < words.length; i++) {
+    if( page === Math.floor( i / 10 ) + 1 )
+      result.push(JSON.parse(JSON.stringify(words[i])));
+  }
+  
+  result.sort((a, b) => (a._length > b._length) ? 1 : -1);
+ /* 
   res.statusCode = 200;
-  res.end(JSON.stringify(w));
-	
+  res.end(JSON.stringify(result));
+*/
   await client.close();
-  return w;
+  return result;
 }
