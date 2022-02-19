@@ -51,6 +51,25 @@
             <a :href="'https://terms.naer.edu.tw/search/?q=' + w.word" target="_blank" title="學術名詞 (NAER) "><img src="https://www.naer.edu.tw/assets/favicons/icon_Favicon_NAER_PNG.PNG"></a>
             <a :href="'https://google.com/search?q=' + w.word" target="_blank" title="網路搜尋 (Google)"><img src="https://www.google.com/favicon.ico"></a>
           </div>
+          <div class="layout pl-3 align-center justify-start">
+            <p class="text small my-4" v-if="hasPrefix(i) || hasSuffix(i)"><span class="text">
+              {{ w.word }}
+              <i aria-hidden="true" class="material-icons icon mx-2">arrow_forward</i>
+              <span class="e4f-v1 text">
+                <span class="plus-container" v-if="hasPrefix(i)">
+                  <a class="prefix--text">{{showPrefix(i)}}</a> 
+                  <span class="plus-sign text"> + </span>
+                </span>
+                <span class="plus-container" v-if="hasMean(i)">
+                  <a class="word--text">{{showMean(i)}}</a> 
+                  <span class="plus-sign text" v-if="hasSuffix(i)"> + </span>
+                </span>
+                <span class="plus-container" v-if="hasSuffix(i)">
+                  <a class="suffix--text">{{showSuffix(i)}}</a> 
+                </span>
+              </span>
+            </span></p>
+          </div>
         </div>
       </div>
     </div>
@@ -195,7 +214,43 @@ export default {
     },
     playaudio: function(i) {
       window.speechSynthesis.speak(new SpeechSynthesisUtterance(this.words[i].word));
+    },
+    hasPrefix: function(i) {
+      return this.words[i].prss.filter(x => x.type === 'p').length > 0 || this.words[i].prss.filter(x => x.type === 'r').length > 0;
+    },
+    hasMean: function(i) {
+      return this.words[i].prss.filter(x => x.type === 'p').length > 0 || this.words[i].prss.filter(x => x.type === 'r').length > 0 || this.words[i].prss.filter(x => x.type === 's').length > 0;
+    },
+    hasSuffix: function(i) {
+      return this.words[i].prss.filter(x => x.type === 's').length > 0 ;
+    },
+    showPrefix: function(i) {
+      if(this.words[i].prss.filter(x => x.type === 'p').length > 0)
+        return this.words[i].prss.filter(x => x.type === 'p')[0].key;
+      else if(this.words[i].prss.filter(x => x.type === 'r').length > 0)
+        return this.words[i].prss.filter(x => x.type === 'r')[0].key;
+      else 
+        return '';
+    },
+    showMean: function(i) {
+      var mean = this.words[i].word;
+
+      if(this.words[i].prss.filter(x => x.type === 'p').length > 0)
+        mean.replace(this.words[i].prss.filter(x => x.type === 'p')[0].key, '');
+      if(this.words[i].prss.filter(x => x.type === 'r').length > 0)
+        mean.replace(this.words[i].prss.filter(x => x.type === 'r')[0].key, '');
+      if(this.words[i].prss.filter(x => x.type === 's').length > 0)
+        mean.replace(this.words[i].prss.filter(x => x.type === 's')[0].key, '');
+      
+      return mean;
+    },
+    showSuffix: function(i) {
+      if(this.words[i].prss.filter(x => x.type === 's').length > 0)
+        return this.words[i].prss.filter(x => x.type === 's')[0].key;
+      else 
+        return '';
     }
+    
   }
 }
 </script>
@@ -215,6 +270,9 @@ export default {
 .loading {
 	display: block;
 }
+.layout {
+  font-size: 20px;
+}
 .layout > a {
   width: 25px !important;
   margin-right: 20px;
@@ -227,5 +285,16 @@ export default {
 }
 .bg-active {
   display: block;
+}
+.prefix--text {
+  color: #e57373 !important;
+  fill: #e57373;
+}
+.word--text {
+  color: #37474f;
+}
+.suffix--text {
+  color: #7e57c2!important;
+  fill: #9575cd;
 }
 </style>
