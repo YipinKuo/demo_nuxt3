@@ -69,20 +69,38 @@ export default {
 	  word_index
     }
   },
-  async setup() {
-    const { data: resp } = await useFetch(
+  mounted() {
+  
+	axios.post(
+		`/api/data_wordbrowser`
+		, {
+			page: 1,
+			query: 'a'
+		})
+		 .then( (resp) => {
+			this.loading = false;
+			this.word_index = 0;
+			this.words = resp.data;
+		 })
+		 .catch( (error) => {
+			this.loading = false;
+			console.log(error);
+		 });
+	/*
+    useFetch(
       `/api/data_wordbrowser`, {
         method: 'POST',
         headers: { 'Content-Type': 'text/json' },
         body: JSON.stringify({
           page: 1,
-          query: query
+          query: 'a'
         })
       }
-    );
-    words = JSON.parse(resp.value);
-	loading = false;
-    return { };
+    ).then(r => {
+		loading = false;
+		words = r.data;
+	});
+	*/
   },
   watch: {
     query: function(newVal, oldVal) { 

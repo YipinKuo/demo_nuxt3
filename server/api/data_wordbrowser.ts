@@ -25,7 +25,7 @@ export default async (req: IncomingMessage, res: ServerResponse) => {
    
   const body = await useBody(req);
   const query = (body.query) ? { word: new RegExp('^' + body.query) } : { word: new RegExp('^a') };
-  var page = (!isNaN(parseInt(body.page)))? body.page : 1;
+  //var page = (!isNaN(parseInt(body.page)))? body.page : 1;
   
   const uri = "mongodb+srv://kevin:qazWSXedcRFV@cluster0.cvv6u.mongodb.net?retryWrites=true&writeConcern=majority";
   //const uri = 'mongodb://adm518:1qazWSX3edcRFV@soicsrv03.soic.org.tw:6603/?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&directConnection=true&ssl=false';
@@ -38,11 +38,15 @@ export default async (req: IncomingMessage, res: ServerResponse) => {
   const words = await collect
           .find(query)
           .project({ "_length": { $strLenCP: "$word" }, "_sort": { $toLower: "$word" }, _id: 1,  word: 1, prss:1 , subs: 1, dictionary: 1 })
-          //.sort({ word_length: 1, word_sort: 1})
-          //.limit(10)
+          .sort({ word_length: 1, word_sort: 1})
+		  .limit(10)
           .toArray();
-          
+       
+  await client.close();  
+  
   words.sort((a, b) => (a._length > b._length) ? 1 : -1);
+  return words;
+  /*
   
   const MaxPage = parseInt(Math.floor(words.length / 10)) + 1;
   page = page > MaxPage ? MaxPage : page;
@@ -53,10 +57,7 @@ export default async (req: IncomingMessage, res: ServerResponse) => {
   }
   
   result.sort((a, b) => (a._length > b._length) ? 1 : -1);
- /* 
-  res.statusCode = 200;
-  res.end(JSON.stringify(result));
-*/
-  await client.close();
+
   return result;
+  */
 }
