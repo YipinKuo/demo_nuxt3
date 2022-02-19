@@ -70,6 +70,34 @@
               </span>
             </span></p>
           </div>
+          
+          <div class="warp-exit"><div class="layout column justify-center">
+            <div class="decomposition mx-3" color="prefix" v-if="hasPrefix(i)">
+              <div class="layout row">
+                <div class="flex type lighten prefix"><div class="layout column align-center justify-center fill-height">首</div></div>
+                <div class="flex content prefix"><div class="layout row justify-space-between align-center fill-height">
+                  <div class="flex"><a class="white--text topic">{{showPrefix(i)}}</a><p>{{showPrefixMean(i)}}</p></div>
+                </div></div>
+              </div>
+            </div>
+            <div class="decomposition mx-3" color="word" v-if="hasMean(i)">
+              <div class="layout row">
+                <div class="flex type lighten word"><div class="layout column align-center justify-center fill-height">字</div></div>
+                <div class="flex content word"><div class="layout row justify-space-between align-center fill-height">
+                  <div class="flex"><a class="white--text topic word--text">{{showMean(i)}}</a><p>{{ w.dictionary.definition }}</p></div>
+                </div></div>
+              </div>
+            </div>
+            <div class="decomposition mx-3" color="suffix" v-if="hasSuffix(i)">
+              <div class="layout row">
+                <div class="flex type lighten suffix"><div class="layout column align-center justify-center fill-height">尾</div></div>
+                <div class="flex content suffix"><div class="layout row justify-space-between align-center fill-height">
+                  <div class="flex"><a class="white--text topic">{{showSuffix(i)}}</a><p>{{showSuffixMean(i)}}</p></div>
+                </div></div>
+              </div>
+            </div>
+          </div></div>
+          
         </div>
       </div>
     </div>
@@ -249,8 +277,21 @@ export default {
         return this.words[i].prss.filter(x => x.type === 's')[0].key;
       else 
         return '';
+    },
+    showPrefixMean: function(i) {
+      if(this.words[i].prss.filter(x => x.type === 'p').length > 0)
+        return this.words[i].prss.filter(x => x.type === 'p')[0].meaning;
+      else if(this.words[i].prss.filter(x => x.type === 'r').length > 0)
+        return this.words[i].prss.filter(x => x.type === 'r')[0].meaning;
+      else 
+        return '';
+    },
+    showSuffixMean: function(i) {
+      if(this.words[i].prss.filter(x => x.type === 's').length > 0)
+        return this.words[i].prss.filter(x => x.type === 's')[0].meaning;
+      else 
+        return '';
     }
-    
   }
 }
 </script>
