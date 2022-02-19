@@ -21,19 +21,19 @@
     </div>
   </header>
   
-  <div class="container-fluid pb-3">
-    <div class="d-grid gap-3" style="grid-template-columns: 1fr 2fr;">
-      <div class="bg-loading text-primary" v-bind:class="[loading]">
+  <div class="container-fluid pb-2">
+    <div class="d-grid gap-2" style="grid-template-columns: 0.5fr 2fr;">
+      <div class="bg-loading text-primary" v-bind:class="{ loading: loading }">
         <div class="spinner-border" role="status">
           <span class="visually-hidden">Loading...</span>
         </div>
       </div>
-      <div class="bg-light border rounded-3">
+      <div class="bg-light border rounded-1">
         <ul class="list-group">
           <li v-for="(w, i) in words" class="list-group-item" v-bind:class="{ active: word_index === i }" @click="word_onclick(i)">{{ w.word }}</li>
         </ul>
       </div>
-      <div class="bg-light border rounded-3">
+      <div class="bg-light border rounded-1">
         <pre> {{ show_word() }} </pre>
       </div>
     </div>
