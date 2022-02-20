@@ -261,13 +261,50 @@ export default {
     },
     showMean: function(i) {
       var mean = this.words[i].word;
-
-      if(this.words[i].prss.filter(x => x.type === 'p').length > 0)
-        mean.replace(this.words[i].prss.filter(x => x.type === 'p')[0].key, '');
-      if(this.words[i].prss.filter(x => x.type === 'r').length > 0)
-        mean.replace(this.words[i].prss.filter(x => x.type === 'r')[0].key, '');
-      if(this.words[i].prss.filter(x => x.type === 's').length > 0)
-        mean.replace(this.words[i].prss.filter(x => x.type === 's')[0].key, '');
+      var temp = '';
+      if(this.words[i].prss.filter(x => x.type === 'p').length > 0) { 
+        temp = this.words[i].prss.filter(x => x.type === 'p')[0].key; 
+        while(temp.length > 1) {
+          temp = temp.replace('-','');
+          var reg = new RegExp('^' + temp);
+          if(mean.match(reg) !== null) {
+            mean = mean.replace(reg, '');
+            break;
+          }
+          temp = temp.substr(0, temp.length - 1);
+        }
+      }
+      temp = temp.replace('-','');
+      var reg = new RegExp('^' + temp);
+      if(mean.match(reg) !== null) { mean = mean.replace(reg, ''); }
+      
+      if(this.words[i].prss.filter(x => x.type === 'r').length > 0) { 
+        temp = this.words[i].prss.filter(x => x.type === 'r')[0].key; 
+        while(temp.length > 1) {
+          temp = temp.replace('-','');
+          var reg = new RegExp('^' + temp);
+          if(mean.match(reg) !== null) {
+            mean = mean.replace(reg, '');
+            break;
+          }
+          temp = temp.substr(0, temp.length - 1);
+        }
+      }
+      temp = temp.replace('-','');
+      var reg = new RegExp('^' + temp);
+      if(mean.match(reg) !== null) { mean = mean.replace(reg, ''); }
+      
+      if(this.words[i].prss.filter(x => x.type === 's').length > 0) { 
+        temp = this.words[i].prss.filter(x => x.type === 's')[0].key; 
+        while(temp.length > 1) {
+          temp = temp.replace('-','');
+          if(mean.indexOf(temp) > -1) {
+            mean = mean.replace(temp, '');
+            break;
+          }
+          temp = temp.substr(0, temp.length - 1);
+        }
+      }
       
       return mean;
     },
