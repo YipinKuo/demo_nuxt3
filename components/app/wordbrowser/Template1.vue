@@ -4,7 +4,7 @@
   <header class="py-3 mb-3 border-bottom">
     <div class="container-fluid d-grid gap-3 align-items-center" style="grid-template-columns: 1fr 2fr;">
       <div class="dropdown">
-        <a @click="ddm_onclick()" class="d-flex align-items-center col-lg-4 mb-2 mb-lg-0 link-dark text-decoration-none dropdown-toggle" id="dropdownNavLink" data-bs-toggle="dropdown" aria-expanded="false"> 單字瀏覽 </a>
+        <a @click="ddm_onclick()" class="d-flex align-items-center col-lg-4 mb-2 mb-lg-0 link-dark text-decoration-none dropdown-toggle" id="dropdownNavLink" data-bs-toggle="dropdown" aria-expanded="false"> 單字瀏覽  </a>
         <ul class="dropdown-menu text-small shadow" v-bind:class="{ show: ddm_sub_show }" aria-labelledby="dropdownNavLink">
           <li><a class="dropdown-item" v-bind:class="{ active: ddm_index === 0 }" @click="ddm_sub_onclick(0)">全部</a></li>
           <li><a class="dropdown-item" v-bind:class="{ active: ddm_index === 1 }" @click="ddm_sub_onclick(1)">字首</a></li>
@@ -103,12 +103,15 @@
     </div>
   </div>
   
+  <svg width="400" height="400"></svg>
+
   </div>
 </div>
 </template>
 
 <script>
 import axios from 'axios';
+import * as d3 from "d3";
 
 var ddm_sub_show = false;
 var ddm_index = 0;
@@ -119,6 +122,7 @@ var word_index = 0;
 var w1 = { word: '', dictionary: { definition: '' }};
 var audio = [];
 var SSU;
+var version;
 
 // ************** Generate the tree diagram	 *****************
 var margin = {top: 20, right: 20, bottom: 20, left: 20},
@@ -164,41 +168,106 @@ export default {
       loading,
       words,
       word_index,
-      w1
+      w1,
+      version
     }
   },
   mounted() {
   
-	axios.post(
-		`/api/data_wordbrowser`
-		, {
-			page: 1,
-			query: 'a'
-		})
-		 .then( (resp) => {
-			this.loading = false;
-			this.word_index = 0;
-			this.words = resp.data;
-		 })
-		 .catch( (error) => {
-			this.loading = false;
-			console.log(error);
-		 });
-	/*
-    useFetch(
-      `/api/data_wordbrowser`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/json' },
-        body: JSON.stringify({
-          page: 1,
-          query: 'a'
-        })
-      }
-    ).then(r => {
-		loading = false;
-		words = r.data;
-	});
-	*/
+    const treeData = {
+      "name": "flare",
+      "children": [
+        {"name": "AgglomerativeCluster", "value": 3938},
+        {"name": "CommunityStructure", "value": 3812},
+        {"name": "HierarchicalCluster", "value": 6714},
+        {"name": "MergeEdge", "value": 743}
+      ]
+    };
+    // 此部分才是重點
+    const tree = data => {
+      const root = d3.hierarchy(data);
+      root.dx = 50;
+      root.dy = 50;
+      return d3.tree().nodeSize([root.dx, root.dy])(root);
+    }
+    // 將資料轉為tree的格式
+    const root = tree(treeData);
+
+    const svg = d3.select('svg').attr('width', 400).attr('height', 400);
+
+    const g = svg.append("g")
+          .attr("font-family", "sans-serif")
+          .attr("font-size", 14)
+          .attr("transform", `translate(50, 100)`);
+
+    // link是點跟點連線的灰色線條
+    const link = g.append("g")
+        .attr("fill", "none")
+        .attr("stroke", "#555")
+        .attr("stroke-opacity", 0.4)
+        .attr("stroke-width", 1.5)
+        .selectAll("path")
+        .data(root.links())
+        .join("path")
+          .attr("d", d3.linkHorizontal()
+              .x(d => d.y)
+              .y(d => d.x));
+              
+       // 這部分是畫上圓圈的部分，透過`descendants`推測出目前資料的`x, y`位置。
+       const node = g.append("g")
+            .attr("stroke-linejoin", "round")
+            .attr("stroke-width", 3)
+            .selectAll("g")
+            .data(root.descendants())
+            .join("g")
+            .attr("transform", d => `translate(${d.y},${d.x})`)
+            .classed('node-text', true);
+            //.each(data => console.log('data', data));
+            
+            
+      node.append("circle")
+          .attr("fill", d => d.children ? "#555" : "#999")
+          .attr("r", 2.5);
+
+      node.append("text")
+          .attr("dy", "0.31em")
+          .attr("x", d => d.children ? -6 : 6)
+          .attr("text-anchor", d => d.children ? "end" : "start")
+          .text(d => d.data.name)
+          .clone(true).lower()
+          .attr("stroke", "white");
+
+    
+    axios.post(
+      `/api/data_wordbrowser`
+      , {
+        page: 1,
+        query: 'a'
+      })
+       .then( (resp) => {
+        this.loading = false;
+        this.word_index = 0;
+        this.words = resp.data;
+       })
+       .catch( (error) => {
+        this.loading = false;
+        console.log(error);
+       });
+      /*
+      useFetch(
+        `/api/data_wordbrowser`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/json' },
+          body: JSON.stringify({
+            page: 1,
+            query: 'a'
+          })
+        }
+      ).then(r => {
+      loading = false;
+      words = r.data;
+    });
+    */
   },
   watch: {
     query: function(newVal, oldVal) { 
@@ -373,5 +442,14 @@ export default {
 .suffix--text {
   color: #7e57c2!important;
   fill: #9575cd;
+}
+.flex.type {
+  width: 70px;
+}
+g.node-text {
+  cursor: pointer;
+}
+g.node-text:hover {
+  text-decoration: underline;
 }
 </style>
