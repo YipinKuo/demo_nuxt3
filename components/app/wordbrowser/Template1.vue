@@ -109,7 +109,6 @@
 
 <script>
 import axios from 'axios';
-const d3 = await import("d3");
 
 var ddm_sub_show = false;
 var ddm_index = 0;
@@ -241,7 +240,7 @@ export default {
       return (this.words) ? JSON.stringify(this.words[this.word_index], undefined, 2) : '';
     },
     playaudio: function(i) {
-    
+      window.speechSynthesis.speak(new SpeechSynthesisUtterance(this.words[i].word));
     },
     hasPrefix: function(i) {
       return this.words[i].prss.filter(x => x.type === 'p').length > 0 || this.words[i].prss.filter(x => x.type === 'r').length > 0;
