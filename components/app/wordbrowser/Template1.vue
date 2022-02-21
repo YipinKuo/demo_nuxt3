@@ -103,7 +103,7 @@
     </div>
   </div>
   
-  <svg width="400" height="400"></svg>
+  <svg width="500" height="400"></svg>
 
   </div>
 </div>
@@ -159,13 +159,13 @@ export default {
         const tree = data => {
           const root = d3.hierarchy(data);
           root.dx = 50;
-          root.dy = 50;
+          root.dy = 100;
           return d3.tree().nodeSize([root.dx, root.dy])(root);
         }
         // 將資料轉為tree的格式
         const root = tree(treeData);
 
-        const svg = d3.select('svg').attr('width', 400).attr('height', 400);
+        const svg = d3.select('svg').attr('width', 500).attr('height', 400);
         svg.selectAll("g").remove();
         const g = svg.append("g")
               .attr("font-family", "sans-serif")
