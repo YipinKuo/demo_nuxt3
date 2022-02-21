@@ -123,35 +123,6 @@ var w1 = { word: '', dictionary: { definition: '' }};
 var audio = [];
 var SSU;
 var version;
-
-// ************** Generate the tree diagram	 *****************
-var margin = {top: 20, right: 20, bottom: 20, left: 20},
-	width = 400 - margin.right - margin.left,
-	height = 400 - margin.top - margin.bottom;
-	
-var i = 0,
-	duration = 750,
-	root;
-/*
-var tree = d3.layout.tree()
-	.size([height, width]);
-
-var diagonal = d3.svg.diagonal()
-	.projection(function(d) { return [d.y, d.x]; });
-
-var svg = d3.select("body").append("svg")
-	.attr("width", width + margin.right + margin.left)
-	.attr("height", height + margin.top + margin.bottom)
-  .append("g")
-	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-*/
-var word_tree = [
-  {
-    "name": "",
-    "parent": "null",
-    "children": []
-  }
-];
 export default {
   data(){ 
     ddm_sub_show = false;
@@ -161,6 +132,84 @@ export default {
     words = [];
     word_index = 0;
     w1 = { word: '', dictionary: { definition: '' }};
+    
+    function d3tree( _data ) {
+        var treeData = {
+          name: _data.word,
+          children: []
+        };
+        for(var i = 0; i < _data.subs.length; i++) {
+          var w = _data.subs[i]; 
+          var item = { name: w.word, children: [] };
+          if(w.subs.length > 0) {
+            for(var j = 0; j < w.subs.length; j++) {
+              var ws = w.subs[j];
+              var subitem = { name: ws.word, children: [] };
+              if(ws.subs.length > 0) { 
+                for(var k = 0; k < ws.subs.length; k++) {
+                  subitem.children.push({ name: ws.subs[k].word });
+                }
+              } 
+              item.children.push(subitem);
+            }
+          } 
+          treeData.children.push(item);
+        }
+        
+        const tree = data => {
+          const root = d3.hierarchy(data);
+          root.dx = 50;
+          root.dy = 50;
+          return d3.tree().nodeSize([root.dx, root.dy])(root);
+        }
+        // 將資料轉為tree的格式
+        const root = tree(treeData);
+
+        const svg = d3.select('svg').attr('width', 400).attr('height', 400);
+        svg.selectAll("g").remove();
+        const g = svg.append("g")
+              .attr("font-family", "sans-serif")
+              .attr("font-size", 14)
+              .attr("transform", `translate(100, 100)`);
+
+        // link是點跟點連線的灰色線條
+        const link = g.append("g")
+            .attr("fill", "none")
+            .attr("stroke", "#555")
+            .attr("stroke-opacity", 0.4)
+            .attr("stroke-width", 1.5)
+            .selectAll("path")
+            .data(root.links())
+            .join("path")
+              .attr("d", d3.linkHorizontal()
+                  .x(d => d.y)
+                  .y(d => d.x));
+                  
+        // 這部分是畫上圓圈的部分，透過`descendants`推測出目前資料的`x, y`位置。
+        const node = g.append("g")
+              .attr("stroke-linejoin", "round")
+              .attr("stroke-width", 3)
+              .selectAll("g")
+              .data(root.descendants())
+              .join("g")
+              .attr("transform", d => `translate(${d.y},${d.x})`)
+              .classed('node-text', true);
+              //.each(data => console.log('data', data));
+              
+        node.append("circle")
+            .attr("fill", d => d.children ? "#555" : "#999")
+            .attr("r", 2.5);
+
+        node.append("text")
+            .attr("dy", "0.31em")
+            .attr("x", d => d.children ? -6 : 6)
+            .attr("text-anchor", d => d.children ? "end" : "start")
+            .text(d => d.data.name)
+            .clone(true).lower()
+            .attr("stroke", "white");  
+    
+    }
+    
     return {
       ddm_sub_show,
       ddm_index,
@@ -169,74 +218,15 @@ export default {
       words,
       word_index,
       w1,
-      version
+      version,
+      d3tree
     }
   },
   mounted() {
-  
-    const treeData = {
-      "name": "flare",
-      "children": [
-        {"name": "AgglomerativeCluster", "value": 3938},
-        {"name": "CommunityStructure", "value": 3812},
-        {"name": "HierarchicalCluster", "value": 6714},
-        {"name": "MergeEdge", "value": 743}
-      ]
-    };
-    // 此部分才是重點
-    const tree = data => {
-      const root = d3.hierarchy(data);
-      root.dx = 50;
-      root.dy = 50;
-      return d3.tree().nodeSize([root.dx, root.dy])(root);
-    }
-    // 將資料轉為tree的格式
-    const root = tree(treeData);
-
-    const svg = d3.select('svg').attr('width', 400).attr('height', 400);
-
-    const g = svg.append("g")
-          .attr("font-family", "sans-serif")
-          .attr("font-size", 14)
-          .attr("transform", `translate(50, 100)`);
-
-    // link是點跟點連線的灰色線條
-    const link = g.append("g")
-        .attr("fill", "none")
-        .attr("stroke", "#555")
-        .attr("stroke-opacity", 0.4)
-        .attr("stroke-width", 1.5)
-        .selectAll("path")
-        .data(root.links())
-        .join("path")
-          .attr("d", d3.linkHorizontal()
-              .x(d => d.y)
-              .y(d => d.x));
-              
-       // 這部分是畫上圓圈的部分，透過`descendants`推測出目前資料的`x, y`位置。
-       const node = g.append("g")
-            .attr("stroke-linejoin", "round")
-            .attr("stroke-width", 3)
-            .selectAll("g")
-            .data(root.descendants())
-            .join("g")
-            .attr("transform", d => `translate(${d.y},${d.x})`)
-            .classed('node-text', true);
-            //.each(data => console.log('data', data));
-            
-            
-      node.append("circle")
-          .attr("fill", d => d.children ? "#555" : "#999")
-          .attr("r", 2.5);
-
-      node.append("text")
-          .attr("dy", "0.31em")
-          .attr("x", d => d.children ? -6 : 6)
-          .attr("text-anchor", d => d.children ? "end" : "start")
-          .text(d => d.data.name)
-          .clone(true).lower()
-          .attr("stroke", "white");
-
+    this.loading = true;
+    this.word_index = 0;
+    this.words = [];
+    this.d3tree({ words:'', subs: [] });
     
     axios.post(
       `/api/data_wordbrowser`
@@ -244,53 +234,41 @@ export default {
         page: 1,
         query: 'a'
       })
-       .then( (resp) => {
+      .then( (resp) => {
         this.loading = false;
         this.word_index = 0;
         this.words = resp.data;
-       })
-       .catch( (error) => {
+        this.d3tree(this.words[0]);
+      })
+      .catch( (error) => {
         this.loading = false;
         console.log(error);
-       });
-      /*
-      useFetch(
-        `/api/data_wordbrowser`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/json' },
-          body: JSON.stringify({
-            page: 1,
-            query: 'a'
-          })
-        }
-      ).then(r => {
-      loading = false;
-      words = r.data;
-    });
-    */
+      });
   },
   watch: {
     query: function(newVal, oldVal) { 
-		this.loading = true;
-		this.word_index = 0;
-		this.words = [];
-		this.w1 = { word: '', dictionary: { definition: '' }};
-		axios.post(
-			`/api/data_wordbrowser`
-			, {
-				page: 1,
-				query: newVal
-			})
-			 .then( (resp) => {
-				this.loading = false;
-				this.word_index = 0;
-				this.words = resp.data;
-				this.w1 = JSON.parse(JSON.stringify(this.words[this.word_index]));
-			 })
-			 .catch( (error) => {
-				this.loading = false;
-				console.log(error);
-			 });
+      this.loading = true;
+      this.word_index = 0;
+      this.words = [];
+      this.w1 = { word: '', subs:[], dictionary: { definition: '' }};
+      this.d3tree(this.w1);
+      axios.post(
+        `/api/data_wordbrowser`
+        , {
+          page: 1,
+          query: newVal
+        })
+         .then( (resp) => {
+          this.loading = false;
+          this.word_index = 0;
+          this.words = resp.data;
+          this.w1 = JSON.parse(JSON.stringify(this.words[this.word_index]));
+          this.d3tree(this.w1);
+         })
+         .catch( (error) => {
+          this.loading = false;
+          console.log(error);
+         });
 		
     }
   },
@@ -304,6 +282,8 @@ export default {
     },
     word_onclick: function(i) {
       this.word_index = i;
+      this.w1 = JSON.parse(JSON.stringify(this.words[this.word_index]));
+      this.d3tree(this.w1);
     },
     show_word: function() {
       return (this.words) ? JSON.stringify(this.words[this.word_index], undefined, 2) : '';
