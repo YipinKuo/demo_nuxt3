@@ -72,11 +72,14 @@ async function Quest()
     state.idx = q0.idx;
     
     var qq0 = result.result.quest.filter((obj) => obj.id === state.idx)[0];
-    state.word = qq0.word;
-    state.quest = qq0.sentence[0].en.text;
-    state.questdesc = qq0.definition[0].type;
-    state.info = qq0.definition[0].zh_tw;
-    state.infodesc = qq0.sentence[0].zh_tw.text;
+    state.word = qq0.answer;
+    state.quest = qq0.quest;
+    state.info0 = qq0.info0;
+    state.info1 = qq0.info1;
+    state.info2 = qq0.info2;
+    state.info3 = qq0.info3;
+    state.info4 = qq0.info4;
+    state.info5 = qq0.info5;
     
     var html = '';
     var arrQuest = state.quest.split(' ');
@@ -248,11 +251,11 @@ function ToCDB(str) {
   </div>
   <div class="text-title text-center">新單字</div>
   <div class="quest" ref="questRef"><input ref="inputRef" type="text" class="w-input" @keyup="onkeyup" /></div>
-  <div class="text-desc text-first"> {{ state.questdesc }} </div>
+  <div class="text-desc text-first"> {{ state.info0 }} </div>
 </div>
 <div class="box-1">
-  <div class="text-title2 text-first"> {{ state.info }} </div>
-  <div class="text-desc text-first"> {{ state.infodesc }} </div>
+  <div class="text-title2 text-first"> {{ state.info1 }} </div>
+  <div class="text-desc text-first"> {{ state.info2 }} </div>
 </div>
 
 </template>
