@@ -17,8 +17,6 @@ export default defineEventHandler(async event => {
     const questdata = await findSQL('quest', { account: account, status: 0  } );  
     if(questdata.length == 1)
     {
-      const resultdata = await findSQL('KingslishWordTemp', { id: { "$in": questdata[0].questids } } ); 
-      
       var answer = questdata[0].answer;
       for(var ii = 0; ii < answer.length; ii++)
       {

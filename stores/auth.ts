@@ -11,10 +11,15 @@ export const useAuthStore = defineStore('auth', {
     showlogin: false,
     showforgetpassword: false,
     showregister: false,
+    showprevbtn: false,
+    shownextbtn: false,
+    vArrQuest: [],
     vTotalQuest: 0,
     vCurrentQuest: 0,
     vTimesQuest: 0,
-    vRemainQuest: 0
+    vRemainQuest: 0,
+    vIdx: -1,
+    vIdx2: -1
   }),
   actions: {
     setAuthentication(token, IsLogin, IsAdmin, OwnIds, UserName) {

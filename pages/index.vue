@@ -15,7 +15,6 @@ const state = reactive({
   infodesc: "",
   answer: "",
   word: "",
-  idx: -1,
   score: 100,
   message: ""
 });
@@ -58,20 +57,20 @@ async function Quest()
     }
     authStore.setQuest(result.result);
     
-    if(result.result.answer.length != result.result.quest.length)
-    {
-      result.result.answer = [];
-      for(var i = 0; i < authStore.vTotalQuest; i++)
-        result.result.answer.push({idx: result.result.quest[i].id, status: 0, score: -1});
-    }
-
     var d0 = result.result.answer.filter((obj) => obj.status === 0); 
     var q0 = d0.reduce((previous, current) => {
       return current.idx < previous.idx ? current : previous;
     });
-    state.idx = q0.idx;
+    authStore.vIdx = q0.idx;
+    if(authStore.vIdx2 !== -1)
+      authStore.vIdx = authStore.vIdx2;
     
-    var qq0 = result.result.quest.filter((obj) => obj.id === state.idx)[0];
+    authStore.showprevbtn = authStore.vIdx > 1;
+    authStore.shownextbtn = authStore.vIdx2 !== -1 && authStore.vIdx < result.result.answer.length;
+    
+    authStore.vArrQuest = result.result.quest;
+    var qq0 = result.result.quest.filter((obj) => obj.id === authStore.vIdx)[0];
+    var qa0 = result.result.answer.filter((obj) => obj.idx === authStore.vIdx)[0];
     state.word = qq0.answer;
     state.quest = qq0.quest;
     state.info0 = qq0.info0;
@@ -80,20 +79,36 @@ async function Quest()
     state.info3 = qq0.info3;
     state.info4 = qq0.info4;
     state.info5 = qq0.info5;
+    state.score = qa0.score;
     
     var html = '';
     var arrQuest = state.quest.split(' ');
+    for (var iii = 0; iii < questRR.children.length; iii++) {
+      if(questRR.children[iii].tagName === 'INPUT')
+        continue;
+      questRR.removeChild(questRR.children[iii]);
+    }
     for(var i=0;i<arrQuest.length;i++)
     {
       if(arrQuest[i] === '__A__')
       {
-        var wb = document.createElement('div');
-        wb.textContent = "";
-        wb.setAttribute('class','w w-back');
-        wb.setAttribute('id','wbackref');
-        questRR.appendChild(wb);
-        var wbackref = document.getElementById('wbackref');
-        inputRR.style = `left: ${wbackref.offsetLeft}px;top: ${wbackref.offsetTop}px;`;
+        if(authStore.vIdx2 === -1)
+        {
+          var wb = document.createElement('div');
+          wb.textContent = "";
+          wb.setAttribute('class','w w-back');
+          wb.setAttribute('id','wbackref');
+          questRR.appendChild(wb);
+          var wbackref = document.getElementById('wbackref');
+          inputRR.style = `left: ${wbackref.offsetLeft}px;top: ${wbackref.offsetTop}px;`;
+        }
+        else
+        {
+          var w = document.createElement('div');
+          w.textContent = state.word;
+          w.setAttribute('class','w');
+          questRR.appendChild(w);
+        }
       }
       else
       {
@@ -110,6 +125,7 @@ async function Quest()
     toastRR.show();
   }
 }
+
 async function onkeyup(e)
 {
   inputRR.value = '';
@@ -166,7 +182,6 @@ async function onkeyup(e)
     if((authStore.vRemainQuest / authStore.vTimesQuest) >= 0.5)
       state.score += 20;
     
-    
      const response = await fetch('/api/quest', {
       method: "PUT", // *GET, POST, PUT, DELETE, etc.
       mode: "cors", // no-cors, *cors, same-origin
@@ -179,7 +194,7 @@ async function onkeyup(e)
       redirect: "follow", // manual, *follow, error
       referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
       body: JSON.stringify({
-        idx: state.idx,
+        idx: authStore.vIdx,
         score: state.score
       }), // body data type must match "Content-Type" header
     });
@@ -208,6 +223,15 @@ async function onkeyup(e)
   }
   return;
 }
+
+
+watch(
+  () => authStore.vIdx2,
+  (newValue, oldValue) => {
+      Quest();
+  },
+  { deep: true }
+);
 
 function ToDBC(txtstring) { 
     var tmp = ""; 
@@ -249,7 +273,7 @@ function ToCDB(str) {
       <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
     </div>
   </div>
-  <div class="text-title text-center">新單字</div>
+  <div class="text-title text-center">新單字  - {{ authStore.vIdx }} - {{ state.score }} </div>
   <div class="quest" ref="questRef"><input ref="inputRef" type="text" class="w-input" @keyup="onkeyup" /></div>
   <div class="text-desc text-first"> {{ state.info0 }} </div>
 </div>
@@ -278,5 +302,10 @@ function ToCDB(str) {
   .quest
   {
     font-size: 24px;
+  }
+  .inline
+  {
+    display: inline;
+    font-size: 10px;
   }
 </style>

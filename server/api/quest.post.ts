@@ -30,7 +30,7 @@ export default defineEventHandler(async event => {
     const questids = resultdata.map(function(item) { return item.id; });
     */
     const questids = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20];
-    const await findSQL('collquest', { id: { "$in": questids } } );
+    const resultdata = await findSQL('collquest', { id: { "$in": questids } } );
     var answer = [];
     for(var ii = 0; ii < questids.length; ii++)
       answer.push({ idx: questids[ii], status: 0, score: 100 });
