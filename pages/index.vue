@@ -1,0 +1,279 @@
+<script lang="ts" setup>
+import { useAuthStore } from '~/stores/auth';
+import { reactive } from "vue";
+const authStore = useAuthStore();
+const { $bootstrap } = useNuxtApp();
+const toastRef = ref(null);
+const questRef = ref(null);
+const inputRef = ref(null);
+let toastRR, questRR, inputRR;
+
+const state = reactive({
+  quest: "",
+  questdesc: "",
+  info: "",
+  infodesc: "",
+  answer: "",
+  word: "",
+  idx: -1,
+  score: 100,
+  message: ""
+});
+
+onMounted(() => {
+  toastRR = $bootstrap.toast(toastRef.value);
+  questRR = questRef.value;
+  inputRR = inputRef.value;
+  Quest();
+});
+onBeforeUnmount(() => {
+  toastRR.dispose();
+});
+
+async function Quest()
+{
+  var isError = false;
+  try
+  {
+    const response = await fetch('/api/quest', {
+      method: "POST", // *GET, POST, PUT, DELETE, etc.
+      mode: "cors", // no-cors, *cors, same-origin
+      cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+      credentials: "same-origin", // include, *same-origin, omit
+      headers: {
+        "Content-Type": "application/json",
+        // 'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      redirect: "follow", // manual, *follow, error
+      referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+      body: '{}', // body data type must match "Content-Type" header
+    });
+    const result = await response.json();
+    if(result.code !== 200)
+    {
+      isError = true;
+      state.message = result.message;
+      toastRR.show();
+      return;
+    }
+    authStore.setQuest(result.result);
+    
+    if(result.result.answer.length != result.result.quest.length)
+    {
+      result.result.answer = [];
+      for(var i = 0; i < authStore.vTotalQuest; i++)
+        result.result.answer.push({idx: result.result.quest[i].id, status: 0, score: -1});
+    }
+
+    var d0 = result.result.answer.filter((obj) => obj.status === 0); 
+    var q0 = d0.reduce((previous, current) => {
+      return current.idx < previous.idx ? current : previous;
+    });
+    state.idx = q0.idx;
+    
+    var qq0 = result.result.quest.filter((obj) => obj.id === state.idx)[0];
+    state.word = qq0.word;
+    state.quest = qq0.sentence[0].en.text;
+    state.questdesc = qq0.definition[0].type;
+    state.info = qq0.definition[0].zh_tw;
+    state.infodesc = qq0.sentence[0].zh_tw.text;
+    
+    var html = '';
+    var arrQuest = state.quest.split(' ');
+    for(var i=0;i<arrQuest.length;i++)
+    {
+      if(arrQuest[i] === '__A__')
+      {
+        var wb = document.createElement('div');
+        wb.textContent = "";
+        wb.setAttribute('class','w w-back');
+        wb.setAttribute('id','wbackref');
+        questRR.appendChild(wb);
+        var wbackref = document.getElementById('wbackref');
+        inputRR.style = `left: ${wbackref.offsetLeft}px;top: ${wbackref.offsetTop}px;`;
+      }
+      else
+      {
+        var w = document.createElement('div');
+        w.textContent = arrQuest[i];
+        w.setAttribute('class','w');
+        questRR.appendChild(w);
+      }
+    }
+  }
+  catch(e)
+  {
+    state.message = e.message;
+    toastRR.show();
+  }
+}
+async function onkeyup(e)
+{
+  inputRR.value = '';
+  var wbackref = document.getElementById('wbackref');
+  if(e.key === 'Backspace')
+  {
+    if(wbackref.innerText.length === 0)
+      return;
+    //wbackref.innerText += wbackref.innerText.substr(0,wbackref.innerText.length - 1);
+    wbackref.removeChild(wbackref.lastChild);
+    state.answer = wbackref.innerText;
+    inputRR.style = `left: ${wbackref.offsetLeft + 0 + (wbackref.innerText.length * 25)}px;top: ${wbackref.offsetTop}px;`;
+    return;
+  }
+  if(e.key === 'Enter')
+  {
+    var len = 0;
+    for(var i=0;i < state.answer.length;i++)
+    {
+      if(state.word.length > state.answer.length)
+        wbackref.children[i].classList.add("w-b");
+      if(state.answer.length > state.word.length)
+        wbackref.children[i].classList.add("w-a");
+        
+      if(state.word[i] != ToCDB(state.answer[i]))
+      {
+        wbackref.children[i].classList.add("w-b");
+      }
+      else
+      {
+        wbackref.children[i].classList.add("w-a");
+        len++;
+      }
+      wbackref.children[i].innerText = state.word[i];
+    }
+    
+    if(state.score === 100)
+    {
+      state.score = Math.ceil(len / state.answer.length * 100);
+      setTimeout(function(){
+        for(var i=0;i < state.answer.length;i++)
+        {
+          wbackref.children[i].classList.remove("w-a");
+          wbackref.children[i].classList.remove("w-b");
+          wbackref.children[i].innerText = state.answer[i];
+        }
+      }, 3000);
+    }
+    if(len !== state.answer.length)
+      return;
+    
+    if(authStore.vRemainQuest <= 0)
+      state.score -= 20;
+    if((authStore.vRemainQuest / authStore.vTimesQuest) >= 0.5)
+      state.score += 20;
+    
+    
+     const response = await fetch('/api/quest', {
+      method: "PUT", // *GET, POST, PUT, DELETE, etc.
+      mode: "cors", // no-cors, *cors, same-origin
+      cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+      credentials: "same-origin", // include, *same-origin, omit
+      headers: {
+        "Content-Type": "application/json",
+        // 'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      redirect: "follow", // manual, *follow, error
+      referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+      body: JSON.stringify({
+        idx: state.idx,
+        score: state.score
+      }), // body data type must match "Content-Type" header
+    });
+    const result = await response.json();
+    if(result.code !== 200)
+    {
+      isError = true;
+      state.message = result.message;
+      toastRR.show();
+      return;
+    }
+    location.reload();
+    return;
+  }
+  if(  (e.keyCode >= 48 && e.keyCode <=  57) 
+    || (e.keyCode >= 65 && e.keyCode <=  90) 
+    || (e.keyCode >= 96 && e.keyCode <= 105) )
+  {
+    var wb0 = document.createElement('div');
+    wb0.textContent = ToDBC(e.key);
+    wb0.setAttribute('class','w0');
+    wbackref.appendChild(wb0);
+    state.answer = wbackref.innerText;
+    inputRR.style = `left: ${wbackref.offsetLeft + 0 + (wbackref.innerText.length * 25)}px;top: ${wbackref.offsetTop}px;`;
+    return;
+  }
+  return;
+}
+
+function ToDBC(txtstring) { 
+    var tmp = ""; 
+    for(var i=0;i<txtstring.length;i++){ 
+        if(txtstring.charCodeAt(i)==32){ 
+            tmp= tmp+ String.fromCharCode(12288); 
+        } 
+        if(txtstring.charCodeAt(i)<127){ 
+            tmp=tmp+String.fromCharCode(txtstring.charCodeAt(i)+65248); 
+        } 
+    } 
+    return tmp; 
+}
+
+function ToCDB(str) { 
+    var tmp = ""; 
+    for(var i=0;i<str.length;i++){ 
+        if (str.charCodeAt(i) == 12288){
+            tmp += String.fromCharCode(str.charCodeAt(i)-12256);
+            continue;
+        }
+        if(str.charCodeAt(i) > 65280 && str.charCodeAt(i) < 65375){ 
+            tmp += String.fromCharCode(str.charCodeAt(i)-65248); 
+        } 
+        else{ 
+            tmp += String.fromCharCode(str.charCodeAt(i)); 
+        } 
+    } 
+    return tmp 
+} 
+</script>
+
+<template>
+  
+<div class="box-1">
+  <div id="RespToast" ref="toastRef" class="toast align-items-center text-bg-danger border-0 mb-4" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body"> {{ state.message }} </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+  <div class="text-title text-center">新單字</div>
+  <div class="quest" ref="questRef"><input ref="inputRef" type="text" class="w-input" @keyup="onkeyup" /></div>
+  <div class="text-desc text-first"> {{ state.questdesc }} </div>
+</div>
+<div class="box-1">
+  <div class="text-title2 text-first"> {{ state.info }} </div>
+  <div class="text-desc text-first"> {{ state.infodesc }} </div>
+</div>
+
+</template>
+
+<style scoped>
+  .text-title
+  {
+    color: #D49B5E;
+    font-size: 12px;
+  }
+  .text-title2
+  {
+    font-size: 18px;
+  }
+  .text-desc
+  {
+    margin: 5px 0;
+    font-size: 14px;
+  }
+  .quest
+  {
+    font-size: 24px;
+  }
+</style>
