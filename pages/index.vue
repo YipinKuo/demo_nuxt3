@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import $ from 'jquery'
 import { useAuthStore } from '~/stores/auth';
 import { reactive } from "vue";
 const authStore = useAuthStore();
@@ -28,6 +29,9 @@ onMounted(() => {
 onBeforeUnmount(() => {
   toastRR.dispose();
 });
+function _uuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {var r = Math.random()*16|0,v=c=='x'?r:r&0x3|0x8;return v.toString(16);});
+}
 
 async function Quest()
 {
@@ -81,13 +85,19 @@ async function Quest()
     state.info5 = qq0.info5;
     state.score = qa0.score;
     
+    
+    
+    var arrw = $(".w");
+    var questRefId = document.getElementById('questRefId');
+    for(var k = 0; k < arrw.length; k++)
+    {
+      if(arrw[k].tagName === 'DIV')
+        questRefId.removeChild(arrw[k]);
+    }
+    
+        
     var html = '';
     var arrQuest = state.quest.split(' ');
-    for (var iii = 0; iii < questRR.children.length; iii++) {
-      if(questRR.children[iii].tagName === 'INPUT')
-        continue;
-      questRR.removeChild(questRR.children[iii]);
-    }
     for(var i=0;i<arrQuest.length;i++)
     {
       if(arrQuest[i] === '__A__')
@@ -228,7 +238,8 @@ async function onkeyup(e)
 watch(
   () => authStore.vIdx2,
   (newValue, oldValue) => {
-      Quest();
+    
+    Quest();
   },
   { deep: true }
 );
@@ -274,7 +285,7 @@ function ToCDB(str) {
     </div>
   </div>
   <div class="text-title text-center">新單字  - {{ authStore.vIdx }} - {{ state.score }} </div>
-  <div class="quest" ref="questRef"><input ref="inputRef" type="text" class="w-input" @keyup="onkeyup" /></div>
+  <div class="quest" id="questRefId" ref="questRef"><input ref="inputRef" type="text" class="w-input" @keyup="onkeyup" /></div>
   <div class="text-desc text-first"> {{ state.info0 }} </div>
 </div>
 <div class="box-1">

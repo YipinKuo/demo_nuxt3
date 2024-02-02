@@ -90,8 +90,6 @@ async function prev()
 
 async function next()
 {
-  console.log('next');
-  
   for(var i = 0; i < authStore.vArrQuest.length; i++)
   {
     if(authStore.vArrQuest[i].id === (authStore.vIdx2 === -1 ? authStore.vIdx : authStore.vIdx2))
