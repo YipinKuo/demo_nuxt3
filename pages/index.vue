@@ -100,7 +100,7 @@ async function Quest()
     var arrQuest = state.quest.split(' ');
     for(var i=0;i<arrQuest.length;i++)
     {
-      if(arrQuest[i] === '__A__')
+      if(arrQuest[i] === state.word)
       {
         if(authStore.vIdx2 === -1)
         {
